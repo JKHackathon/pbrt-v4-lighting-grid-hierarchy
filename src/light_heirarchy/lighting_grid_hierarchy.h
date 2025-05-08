@@ -6,6 +6,7 @@
 #include "pbrt/util/transform.h"
 #include <nanovdb/NanoVDB.h>
 #include <pbrt/samplers.h>
+#include <fstream>
 
 class LGH
 {

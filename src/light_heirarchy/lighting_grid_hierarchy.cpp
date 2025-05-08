@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <pbrt/media.h>
 #include <array>
+#include <fstream>
 
 // LGH::LGH(pbrt::SampledGrid<float> temperature_grid, int depth, float base_voxel_size, float transmission) 
 LGH::LGH(const nanovdb::FloatGrid* temperature_grid, int depth, float base_voxel_size, float transmission, pbrt::Transform transform)
@@ -51,6 +52,13 @@ LGH::LGH(const nanovdb::FloatGrid* temperature_grid, int depth, float base_voxel
     if (lighting_grids.size() != l_max + 1) {
         LOG_FATAL("Invalid number of grids");
     }
+
+    // At the end of LGH::LGH(...)
+    std::ofstream out("shadowmap_level0.csv");
+    for (size_t i = 0; i < filtered_densities[0].size(); ++i) {
+        out << grid_vertices[0][i].x << "," << grid_vertices[0][i].y << "," << grid_vertices[0][i].z << "," << filtered_densities[0][i] << "\\n";
+    }
+    out.close();
 }
 
 

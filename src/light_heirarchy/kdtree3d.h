@@ -1,90 +1,103 @@
 #pragma once
-
 #include "Vector3f.h"
 #include <vector>
 #include <memory>
+#include <algorithm>   // std::nth_element
 
+// ─────────────────────────────────────────────────────────────────────────────
+// KDNode with a stable index "idx"  (needed for shadow_cubes[level][idx])
+// ─────────────────────────────────────────────────────────────────────────────
 struct KDNode {
-    Vector3f point;
-    float intensity;
+    Vector3f                point;      // world-space position
+    float                   intensity;  // I_j  (luminance or energy)
+    int                     idx = -1;   // stable slot in nodesFlat_
     std::unique_ptr<KDNode> left;
     std::unique_ptr<KDNode> right;
 
-    KDNode(const Vector3f pos, const float intensity) : point(pos), intensity(intensity) {}
+    KDNode(const Vector3f& pos, float I, int index)
+        : point(pos), intensity(I), idx(index) {}
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Simple KD-tree for point lights
+// ─────────────────────────────────────────────────────────────────────────────
 class KDTree {
 public:
+    using LightPair = std::pair<Vector3f, float>;
 
-    KDTree(const std::vector<std::pair<Vector3f, float>>& lights) {
-        root = build(lights, 0);
+    // Build from a list of {position, intensity}
+    explicit KDTree(const std::vector<LightPair>& lights) {
+        nodesFlat_.reserve(lights.size());
+        root_ = build(lights, 0);
     }
 
-    // TODO: modify to return intensity, not point (fixed)
-    void radiusSearch(const Vector3f& target, float radius, std::vector<KDNode*>& results) const {
-        radiusSearchRecursive(root.get(), target, radius * radius, 0, results);
+    // Return *all* nodes within "radius" of target
+    void radiusSearch(const Vector3f&          target,
+                      float                    radius,
+                      std::vector<KDNode*>&    results) const
+    {
+        radiusSearchRecursive(root_.get(), target,
+                              radius * radius, 0, results);
     }
 
-    // TODO: needs lookup for a single node given position
+    // Flat, array-style access used by LGH
+    size_t              size() const                { return nodesFlat_.size(); }
+    KDNode*             at(size_t i) const          { return nodesFlat_[i]; }
 
 private:
-    // put this, for example, in KDTree.h or a shared Lights.h
-struct LightRecord
-{
-    Vector3f pos;   // world-space position of the light
+    // ------------------------------------------------------------------
+    std::unique_ptr<KDNode> build(const std::vector<LightPair>& pts, int depth)
+    {
+        if (pts.empty()) return nullptr;
 
-    // you can decide what you store for intensity:
-    //  * float  I            – already a luminance
-    //  * Vector3f rgb        – if you keep RGB, we'll convert to luminance
+        const int    axis   = depth % 3;
+        const size_t median = pts.size() / 2;
 
-    float  I;       // simplest: store luminance directly
-    // Vector3f rgb;   // <-- alternate form if you need full colour
-};
-
-    std::unique_ptr<KDNode> root;
-
-    std::unique_ptr<KDNode> build(std::vector<std::pair<Vector3f,float>> points, int depth) {
-        if (points.empty()) return nullptr;
-
-        int axis = depth % 3;
-        size_t median = points.size() / 2;
-
-        // Sorts based on position
-        std::nth_element(points.begin(), points.begin() + median, points.end(),
-            [axis](const std::pair<Vector3f, float>& a, const std::pair<Vector3f, float>& b) {
+        std::vector<LightPair> ptsCopy = pts;
+        std::nth_element(ptsCopy.begin(), ptsCopy.begin() + median, ptsCopy.end(),
+            [axis](const LightPair& a, const LightPair& b) {
                 return a.first[axis] < b.first[axis];
             });
 
-        std::unique_ptr<KDNode> node = std::make_unique<KDNode>(points[median].first, points[median].second);
+        int     myIdx = static_cast<int>(nodesFlat_.size());
+        auto    node  = std::make_unique<KDNode>(
+                            ptsCopy[median].first,
+                            ptsCopy[median].second,
+                            myIdx);
 
-        std::vector<std::pair<Vector3f,float>> leftPoints(points.begin(), points.begin() + median);
-        std::vector<std::pair<Vector3f,float>> rightPoints(points.begin() + median + 1, points.end());
+        nodesFlat_.push_back(node.get());   // keep stable pointer
 
-        node->left = build(leftPoints, depth + 1);
-        node->right = build(rightPoints, depth + 1);
+        std::vector<LightPair> leftPts (ptsCopy.begin(),            ptsCopy.begin() + median);
+        std::vector<LightPair> rightPts(ptsCopy.begin() + median + 1, ptsCopy.end());
 
+        node->left  = build(leftPts,  depth + 1);
+        node->right = build(rightPts, depth + 1);
         return node;
     }
 
-    void radiusSearchRecursive(KDNode* node, const Vector3f& target, float radiusSquared,
-                               int depth, std::vector<KDNode*>& results) const {
+    void radiusSearchRecursive(KDNode*               node,
+                               const Vector3f&       target,
+                               float                 radius2,
+                               int                   depth,
+                               std::vector<KDNode*>& results) const
+    {
         if (!node) return;
 
-        if (target.distanceSquared(node->point) <= radiusSquared) {
+        if (target.distanceSquared(node->point) <= radius2)
             results.push_back(node);
-        }
 
-        int axis = depth % 3;
-        float diff = target[axis] - node->point[axis];
+        const int axis = depth % 3;
+        float diff     = target[axis] - node->point[axis];
 
-        if (diff <= 0) {
-            radiusSearchRecursive(node->left.get(), target, radiusSquared, depth + 1, results);
-            if (diff * diff <= radiusSquared)
-                radiusSearchRecursive(node->right.get(), target, radiusSquared, depth + 1, results);
-        } else {
-            radiusSearchRecursive(node->right.get(), target, radiusSquared, depth + 1, results);
-            if (diff * diff <= radiusSquared)
-                radiusSearchRecursive(node->left.get(), target, radiusSquared, depth + 1, results);
-        }
+        KDNode* nearChild  = diff <= 0 ? node->left.get()  : node->right.get();
+        KDNode* farChild   = diff <= 0 ? node->right.get() : node->left.get();
+
+        radiusSearchRecursive(nearChild, target, radius2, depth + 1, results);
+        if (diff * diff <= radius2)
+            radiusSearchRecursive(farChild, target, radius2, depth + 1, results);
     }
+
+    // ------------------------------------------------------------------
+    std::unique_ptr<KDNode>   root_;
+    std::vector<KDNode*>      nodesFlat_;   // indexable container
 };
