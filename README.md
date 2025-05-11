@@ -31,7 +31,9 @@ https://github.com/user-attachments/assets/fd0103cd-96e0-4f30-a9d2-221c40c5336f
 
 # Work Split:
 Custom Volumetric Pathtracer: Aman Agarwal
+
 LGH Implementation: Joel Kim and Varun Satheesh
+
 Shadow Maps Implementation: Varun Satheesh, Yuxin Ni, Joel Kim
 
 # Presentation: 
