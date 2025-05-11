@@ -42,5 +42,7 @@ https://docs.google.com/presentation/d/1GI22gIrg2Ki-uHBHz9Gova_g8ruCZ-GQESTjxdBi
 # Explosion Data:
 SideFX Houdini VDB files
 
+# Cinematic Reveal: (Relevent rights to Christopher Nolan and Oppenheimer Team)
+[oppen.mp4.zip](https://github.com/user-attachments/files/20151230/oppen.mp4.zip)
 
 
