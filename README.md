@@ -2,8 +2,11 @@
 
 # Members:
 Varun Satheesh
+
 Joel Kim
+
 Aman Agarwal
+
 Yuxin Ni
 
 # Paper Implemented: Lighting Grid Hierarchy for Self-illuminating Explosions 
@@ -11,6 +14,7 @@ https://www.cemyuksel.com/research/lgh/lgh.pdf
 
 # Authors: 
 Can Yuksel
+
 Cem Yuksel
 
 # Results:
