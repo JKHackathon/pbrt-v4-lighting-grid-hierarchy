@@ -1,50 +1,39 @@
-#pragma once
+#ifndef KDTREE3D_H
+#define KDTREE3D_H
 
 #include "Vector3f.h"
 #include <vector>
 #include <memory>
-#include <limits>
+#include <algorithm>
+#include <tuple>
+#include "CubeDS.h"
 
 struct KDNode {
     Vector3f point;
     float intensity;
+    CubeDS shadowCubeMap;
+    
     std::unique_ptr<KDNode> left;
     std::unique_ptr<KDNode> right;
 
-    KDNode(const Vector3f pos, const float intensity) : point(pos), intensity(intensity) {}
+    KDNode(const Vector3f& pos, float intensity, const CubeDS& cubeMap) 
+        : point(pos), intensity(intensity), shadowCubeMap(cubeMap), left(nullptr), right(nullptr) {}
 };
 
 class KDTree {
 public:
-
-    KDTree(const std::vector<std::pair<Vector3f, float>>& lights) {
+    KDTree(const std::vector<std::tuple<Vector3f, float, CubeDS>>& lights) {
         root = build(lights, 0);
     }
 
-    // TODO: modify to return intensity, not point (fixed)
     void radiusSearch(const Vector3f& target, float radius, std::vector<KDNode*>& results) const {
         radiusSearchRecursive(root.get(), target, radius * radius, 0, results);
     }
 
-    // TODO: needs lookup for a single node given position
-
 private:
-    // put this, for example, in KDTree.h or a shared Lights.h
-struct LightRecord
-{
-    Vector3f pos;   // world-space position of the light
-
-    // you can decide what you store for intensity:
-    //  * float  I            – already a luminance
-    //  * Vector3f rgb        – if you keep RGB, we'll convert to luminance
-
-    float  I;       // simplest: store luminance directly
-    // Vector3f rgb;   // <-- alternate form if you need full colour
-};
-
     std::unique_ptr<KDNode> root;
 
-    std::unique_ptr<KDNode> build(std::vector<std::pair<Vector3f,float>> points, int depth) {
+    std::unique_ptr<KDNode> build(std::vector<std::tuple<Vector3f,float,CubeDS>> points, int depth) {
         if (points.empty()) return nullptr;
 
         int axis = depth % 3;
@@ -52,17 +41,21 @@ struct LightRecord
 
         // Sorts based on position
         std::nth_element(points.begin(), points.begin() + median, points.end(),
-            [axis](const std::pair<Vector3f, float>& a, const std::pair<Vector3f, float>& b) {
-                return a.first[axis] < b.first[axis];
+            [axis](const std::tuple<Vector3f, float, CubeDS>& a, const std::tuple<Vector3f, float, CubeDS>& b) {
+                return std::get<0>(a)[axis] < std::get<0>(b)[axis];
             });
 
-        std::unique_ptr<KDNode> node = std::make_unique<KDNode>(points[median].first, points[median].second);
+        auto node = std::make_unique<KDNode>(
+            std::get<0>(points[median]), 
+            std::get<1>(points[median]),
+            std::get<2>(points[median])
+        );
 
-        std::vector<std::pair<Vector3f,float>> leftPoints(points.begin(), points.begin() + median);
-        std::vector<std::pair<Vector3f,float>> rightPoints(points.begin() + median + 1, points.end());
+        std::vector<std::tuple<Vector3f,float,CubeDS>> leftPoints(points.begin(), points.begin() + median);
+        std::vector<std::tuple<Vector3f,float,CubeDS>> rightPoints(points.begin() + median + 1, points.end());
 
-        node->left = build(leftPoints, depth + 1);
-        node->right = build(rightPoints, depth + 1);
+        node->left = build(std::move(leftPoints), depth + 1);
+        node->right = build(std::move(rightPoints), depth + 1);
 
         return node;
     }
@@ -89,3 +82,5 @@ struct LightRecord
         }
     }
 };
+
+#endif // KDTREE3D_H

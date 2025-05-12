@@ -33,6 +33,8 @@
 #include <memory>
 #include <vector>
 
+#include "../light_heirarchy/lighting_grid_hierarchy.h"
+
 namespace pbrt {
 
 // Media Function Declarations
@@ -649,6 +651,8 @@ class NanoVDBMedium {
         return DDAMajorantIterator(ray, tMin, tMax, &majorantGrid, sigma_t);
     }
 
+    LGH* m_lgh;
+
   private:
     // NanoVDBMedium Private Methods
     PBRT_CPU_GPU
@@ -663,6 +667,12 @@ class NanoVDBMedium {
         if (temp <= 100.f)
             return SampledSpectrum(0.f);
         return LeScale * BlackbodySpectrum(temp).Sample(lambda);
+        // TODO: find a way to switch between this and lgh lighting (global flag? less than ideal but)
+        // How can we access LGH class here?
+        // Ah, maybe I make LGH an object of this class. Would make it easy to initialize/use
+        // Hard part would be getting transmission and setting lights in scene for base example
+
+        // m_lgh->get_total_illum(p);
     }
 
     // NanoVDBMedium Private Members
@@ -731,6 +741,8 @@ PBRT_CPU_GPU SampledSpectrum SampleT_maj(Ray ray, Float tMax, Float u, RNG &rng,
     return ray.medium.Dispatch(sample);
 }
 
+
+// EXPLOSION: the actual part that marches through the entire volume ray
 template <typename ConcreteMedium, typename F>
 PBRT_CPU_GPU SampledSpectrum SampleT_maj(Ray ray, Float tMax, Float u, RNG &rng,
                                          const SampledWavelengths &lambda, F callback) {
@@ -748,7 +760,7 @@ PBRT_CPU_GPU SampledSpectrum SampleT_maj(Ray ray, Float tMax, Float u, RNG &rng,
     while (!done) {
         // Get next majorant segment from iterator and sample it
         pstd::optional<RayMajorantSegment> seg = iter.Next();
-        if (!seg)
+        if (!seg) // EXPLOSION TODO: maybe check if no segment ever hit?
             return T_maj;
         // Handle zero-valued majorant for current segment
         if (seg->sigma_maj[0] == 0) {
