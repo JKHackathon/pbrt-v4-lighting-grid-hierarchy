@@ -11,10 +11,7 @@
 class LGH
 {
 public:
-    // TODO: separate into constructor and initialization function
-    // TODO: fix inputs
-    // LGH(pbrt::SampledGrid<float> temperature_grid, int depth, float base_voxel_size, float transmission);
-    LGH(const nanovdb::FloatGrid* temperature_grid, const nanovdb::FloatGrid* density_grid, int depth, float base_voxel_size, float transmission, pbrt::Transform transform);
+    LGH(const nanovdb::FloatGrid* temperature_grid, const nanovdb::FloatGrid* density_grid, int depth, float base_voxel_size, pbrt::Transform transform);
 
     pbrt::SampledSpectrum get_intensity(int L,
                                         Vector3f targetPos,
@@ -32,19 +29,14 @@ public:
                                           float tMax,
                                           pbrt::Ray ray);
 
-    const float TEMP_THRESHOLD = 1.0f;
+    const float TEMP_THRESHOLD = 100.f;
+    const float TEMP_SCALE = 1500;
 
     const pbrt::Transform medium_transform;
-    
-
-
-    // static void extract_lights(pbrt::SampledGrid<float> temperature_grid);
 
     const float alpha = 1.0f;
     const int l_max;
 
-    // TODO: remove this to use pbrt transmission instead
-    const float transmission;
     const nanovdb::FloatGrid* m_temperature_grid;
     const nanovdb::FloatGrid* m_density_grid;
     
@@ -52,8 +44,8 @@ public:
 private:
     void create_S0(const nanovdb::FloatGrid* temperature_grid);
     void deriveNewS(int l);//, KDTree S0);
-    Vector3f calcNewPos(int l, Vector3f target_light_pos, std::vector<KDNode*> j_lights);//const Vector3f& gv, int l, const KDTree& S0) const;
-    float calcNewI(int l, Vector3f target_light_pos, std::vector<KDNode*> j_lights); //const Vector3f& gv, int l, const KDTree& S0) const;
+    Vector3f calcNewPos(int l, Vector3f target_light_pos, std::vector<KDNode*> j_lights);
+    float calcNewI(int l, Vector3f target_light_pos, std::vector<KDNode*> j_lights);
 
     float blendingFunction(int level, float distance, float r_l);
     CubeDS create_cube_map(int                level,

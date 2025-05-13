@@ -2,7 +2,6 @@
 #define CUBEDS_H
 
 #include <vector>      // for std::vector
-#include <cstdio>      // <stdio.h> works too, but <cstdio> is the C++ header
 #include "Vector3f.h"
 #include <pbrt/util/spectrum.h>
 
@@ -16,7 +15,7 @@ struct Texel
 
 struct CubeDS
 {
-    std::vector<Texel> Texels; // OK once <vector> is included
+    std::vector<Texel> Texels;
     int resolution;
     float h;
 };

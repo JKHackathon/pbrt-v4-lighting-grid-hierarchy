@@ -2101,7 +2101,7 @@ add_library (pbrt_lib STATIC
   src/ext/lodepng/lodepng.cpp
   src/ext/rply/rply.cpp
   src/pbrt/cmd/nvdb_to_vdb.cpp
-  src/light_heirarchy/kdtree3d.h src/light_heirarchy/kdtree3d.cpp
+  src/light_heirarchy/kdtree3d.h
   src/light_heirarchy/Vector3f.h
   src/light_heirarchy/lighting_grid_hierarchy.h src/light_heirarchy/lighting_grid_hierarchy.cpp
   )

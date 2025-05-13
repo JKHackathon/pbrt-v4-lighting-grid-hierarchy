@@ -979,12 +979,6 @@ SampledSpectrum VolPathIntegrator::Li(RayDifferential ray, SampledWavelengths &l
 
             if (ray.medium.Is<NanoVDBMedium>()) {
                 // printf("using LGH\n");
-                // if (si)
-                    // printf("     Shape intersection: %s\n", si.value().ToString().c_str());
-
-                // TODO:
-
-                int steps = 0;
 
                 // March through volume
                 SampledSpectrum T_maj = SampleT_maj(
@@ -998,17 +992,11 @@ SampledSpectrum VolPathIntegrator::Li(RayDifferential ray, SampledWavelengths &l
 
                         // Only care about transmission because not randomly sampling
                         L += T_maj * estimated_lighting;
-                        steps++;
                         // //printf("Ray: %s, Transmission: %s, tMax:%f\n", ray.ToString().c_str(), T_maj.ToString().c_str(), tMax);
                         return true;
 
                     });
                 // printf("Ray: %s, Transmission: %s, tMax:%f\n", ray.ToString().c_str(), T_maj.ToString().c_str(), tMax);
-
-                // Calculate transmittance (note this has to be done for every call to get_intensity, not here
-                    // The ray is from target point to the light
-                    // What
-
             }
             else {
             SampledSpectrum T_maj = SampleT_maj(

@@ -78,4 +78,17 @@ inline Vector3f operator*(float scalar, const Vector3f& vec) {
         return vec * scalar;
     }
 
+inline float dot(const Vector3f& a, const Vector3f& b) {
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+inline float length(const Vector3f& a) {
+    return std::sqrt(dot(a,a));
+}
+
+inline Vector3f normalise(const Vector3f& a) {
+    if (length(a) != 0) return a * (1.f/length(a));
+    else return a;
+}
+
 #endif // VECTOR3F_H
