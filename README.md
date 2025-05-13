@@ -27,6 +27,8 @@ https://github.com/user-attachments/assets/6c972117-4b8b-4b7e-be71-1209b9fa4bd4
 ### Custom Pathtracer Output (GPU): (Render Time: 2 hours)
 https://github.com/user-attachments/assets/fd0103cd-96e0-4f30-a9d2-221c40c5336f
 
+GitHub Repo: https://github.com/aman190202/cuda
+
 ## Presentation: 
 https://docs.google.com/presentation/d/1Av-D8AiICcnf_mRjBRvj3_hNDxfOkJupqBf9BdU79cs/edit?usp=sharing
 
